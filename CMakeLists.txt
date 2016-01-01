@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.4.1)
 project (OpenGLTutorial)
 
+#Probably sets value for ${OPENGL_LIBRARY}
 find_package(OpenGL REQUIRED)
 
 # Compile external dependencies 
@@ -22,6 +23,7 @@ include_directories(
 	external/glfw-3.1.2/include/
 	external/glm-0.9.7.1/
 	external/glew-1.13.0/include/
+	.
 )
 
 set(ALL_LIBS
@@ -40,6 +42,7 @@ add_definitions(
 )
 
 add_subdirectory(Lesson1)
+add_subdirectory(Lesson2)
 
 #This somehow makes Lesson1 run after building ALL_BUILD in VS
 create_default_target_launcher(
