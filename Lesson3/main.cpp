@@ -15,6 +15,18 @@ using namespace glm;
 
 #include <common/shader.hpp>
 
+GLuint uiVBO[4];
+GLuint uiVAO[2];
+float fTriangle[9]; // Data to render triangle (3 vertices, each has 3 floats)
+float fQuad[12]; // Data to render quad using triangle strips (4 vertices, each has 3 floats)
+float fTriangleColor[9];
+float fQuadColor[12];
+GLuint programID;
+
+//Declarations
+void initScene();
+void renderScene();
+
 int main(void)
 {
 	// Initialise GLFW
@@ -53,19 +65,28 @@ int main(void)
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
+	initScene();
+	do {
 
-	// Use our shader
-	glUseProgram(programID);
+		renderScene();
+		glfwPollEvents();
 
-	GLuint uiVBO[4];
-	GLuint uiVAO[2];
-	float fTriangle[9]; // Data to render triangle (3 vertices, each has 3 floats)
-	float fQuad[12]; // Data to render quad using triangle strips (4 vertices, each has 3 floats)
-	float fTriangleColor[9];
-	float fQuadColor[12];
+	} // Check if the ESC key was pressed or the window was closed
+	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+		glfwWindowShouldClose(window) == 0);
 
+	// Cleanup VBO
+	glDeleteVertexArrays(2, uiVAO);
+	glDeleteBuffers(4, uiVBO);
+	glDeleteProgram(programID);
+
+	// Close OpenGL window and terminate GLFW
+	glfwTerminate();
+
+	return 0;
+}
+
+void initScene() {
 	// Setup triangle vertices
 	fTriangle[0] = -0.4f; fTriangle[1] = 0.1f; fTriangle[2] = 0.0f;
 	fTriangle[3] = 0.4f; fTriangle[4] = 0.1f; fTriangle[5] = 0.0f;
@@ -91,7 +112,7 @@ int main(void)
 	glGenVertexArrays(2, uiVAO); // Generate two VAOs, one for triangle and one for quad
 	glGenBuffers(4, uiVBO); // And four VBOs
 
-	// Setup whole triangle
+							// Setup whole triangle
 	glBindVertexArray(uiVAO[0]);
 
 	glBindBuffer(GL_ARRAY_BUFFER, uiVBO[0]);
@@ -119,32 +140,23 @@ int main(void)
 
 	glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
 
-	do {
+	// Create and compile our GLSL program from the shaders
+	programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
 
-		glClear(GL_COLOR_BUFFER_BIT);
+	// Use our shader
+	glUseProgram(programID);
+}
+void renderScene() {
+	glClear(GL_COLOR_BUFFER_BIT);
 
-		// Triangle render
-		glBindVertexArray(uiVAO[0]);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+	// Triangle render
+	glBindVertexArray(uiVAO[0]);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-		// Quad render using triangle strip
-		glBindVertexArray(uiVAO[1]);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	// Quad render using triangle strip
+	glBindVertexArray(uiVAO[1]);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-		// Swap buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-
-	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		glfwWindowShouldClose(window) == 0);
-
-	// Cleanup VBO
-	glDeleteBuffers(2, uiVBO);
-	glDeleteProgram(programID);
-
-	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
-
-	return 0;
+	// Swap buffers
+	glfwSwapBuffers(window);
 }

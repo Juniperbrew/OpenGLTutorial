@@ -44,6 +44,7 @@ add_definitions(
 add_subdirectory(Lesson1)
 add_subdirectory(Lesson2)
 add_subdirectory(Lesson3)
+add_subdirectory(Lesson4)
 
 #This somehow makes Lesson1 run after building ALL_BUILD in VS
 create_default_target_launcher(
