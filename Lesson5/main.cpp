@@ -29,19 +29,16 @@ void frameBufferSizeChanged(GLFWwindow* window, int width, int height);
 void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
 void logFPS();
 
-//Delta
+//Delta calculation
 double delta, lastLoopTime;
-
-//Delta
-float fFrameInterval = 0;
-clock_t tLastFrame;
 
 // Used for FPS calculation
 int FPSCount, currentFPS;
 double lastSecond;
 
-// Used for FPS calculation
-clock_t tLastSecond;
+//Render time logging
+double lastRenderDuration;
+
 
 #define HM_SIZE_X 4 // Dimensions of our heightmap
 #define HM_SIZE_Y 4
@@ -207,6 +204,7 @@ void initScene() {
 
 void renderScene() {
 
+	double renderStart = glfwGetTime();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindVertexArray(uiVAOHeightmap);
 
@@ -219,6 +217,7 @@ void renderScene() {
 	fRotationAngle += sof(1.0f);
 	
 	glfwSwapBuffers(window);
+	lastRenderDuration = glfwGetTime() - renderStart;
 }
 
 void releaseScene()
@@ -248,6 +247,11 @@ void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	{
 		bVerticalSync = !bVerticalSync;
 		glfwSwapInterval(bVerticalSync ? 1 : 0);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS)
+	{
+		std::cout << lastRenderDuration << "ms" << std::endl;
 	}
 }
 
