@@ -53,7 +53,7 @@ GLuint uiVAOHeightmap; // One VAO for heightmap
 
 GLuint programID;
 
-bool bShowFPS;
+bool bShowFPS = true;
 bool bVerticalSync;
 
 float fRotationAngle = 0.0f;
@@ -112,10 +112,6 @@ int main(void)
 	do {
 		logFPS();
 		updateDelta();
-		if (bShowFPS) {
-			char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, bVerticalSync ? "On" : "Off");
-			glfwSetWindowTitle(window, buf);
-		}
 		renderScene();
 		glfwPollEvents();
 
@@ -132,6 +128,9 @@ int main(void)
 }
 
 void initScene() {
+
+	glfwSwapInterval(1);
+	bVerticalSync = true;
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -266,32 +265,12 @@ void logFPS() {
 		currentFPS = 0;
 	}
 	currentFPS++;
+	if (bShowFPS) {
+		char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, bVerticalSync ? "On" : "Off");
+		glfwSetWindowTitle(window, buf);
+	}
 }
 
 float sof(float fVal) {
 	return fVal*delta;
 }
-
-
-/*
-void logFPS() {
-	clock_t tCurrent = clock();
-	if ((tCurrent - tLastSecond) >= CLOCKS_PER_SEC)
-	{
-		tLastSecond += CLOCKS_PER_SEC;
-		FPSCount = CurrentFPS;
-		CurrentFPS = 0;
-	}
-	CurrentFPS++;
-}
-
-void updateDelta()
-{
-	clock_t tCur = clock();
-	fFrameInterval = float(tCur - tLastFrame) / float(CLOCKS_PER_SEC);
-	tLastFrame = tCur;
-}
-
-float sof(float fVal) {
-	return fVal*fFrameInterval;
-}*/
