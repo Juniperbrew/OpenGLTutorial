@@ -1,7 +1,8 @@
 #version 330
 
-uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
+uniform mat4 proj;
+uniform mat4 view;
+uniform mat4 model;
 
 layout (location = 0) in vec3 inPosition;
 
@@ -9,6 +10,6 @@ smooth out vec3 thePosition; // Interpolate position among fragments
 
 void main()
 {
-	gl_Position = projectionMatrix*modelViewMatrix*vec4(inPosition, 1.0);
+	gl_Position = proj * view * model*vec4(inPosition, 1.0);
 	thePosition = inPosition;
 }

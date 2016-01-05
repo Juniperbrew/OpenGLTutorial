@@ -24,10 +24,21 @@ void initScene();
 void renderScene();
 void releaseScene();
 float sof(float fVal);
-void updateTimer();
+void updateDelta();
 void frameBufferSizeChanged(GLFWwindow* window, int width, int height);
 void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
 void logFPS();
+
+//Delta
+double delta, lastLoopTime;
+
+//Delta
+float fFrameInterval = 0;
+clock_t tLastFrame;
+
+// Used for FPS calculation
+int FPSCount, currentFPS;
+double lastSecond;
 
 // Used for FPS calculation
 int iFPSCount, iCurrentFPS;
@@ -46,11 +57,12 @@ GLuint programID;
 bool bShowFPS;
 bool bVerticalSync;
 
-glm::mat4 mProjection = glm::mat4();
 float fRotationAngle = 0.0f;
 const float PIover180 = 3.1415f / 180.0f;
-float fFrameInterval = 0;
-clock_t tLastFrame;
+
+GLint uniModel;
+GLint uniProj;
+GLint uniView;
 
 const char *title = "05.) Indexed Drawing - Tutorial by Michal Bubnar (www.mbsoftworks.sk)";
 
@@ -99,12 +111,12 @@ int main(void)
 	initScene();
 
 	do {
-
+		logFPS();
+		updateDelta();
 		if (bShowFPS) {
 			char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", iFPSCount, bVerticalSync ? "On" : "Off");
 			glfwSetWindowTitle(window, buf);
 		}
-		updateTimer();
 		renderScene();
 		glfwPollEvents();
 
@@ -121,9 +133,6 @@ int main(void)
 }
 
 void initScene() {
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	mProjection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -180,25 +189,32 @@ void initScene() {
 	// Use our shader
 	glUseProgram(programID);
 
+	//Get uniforms
+	uniModel = glGetUniformLocation(programID, "model");
+	uniProj = glGetUniformLocation(programID, "proj");
+	uniView = glGetUniformLocation(programID, "view");
+
+	//Setup projection and view
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glm::mat4 projection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
+	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
+
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 60, 30), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
 	glEnable(GL_DEPTH_TEST);
 	glClearDepth(1.0);
 }
 
 void renderScene() {
 
-	logFPS();
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindVertexArray(uiVAOHeightmap);
 
-	int iModelViewLoc = glGetUniformLocation(programID, "modelViewMatrix");
-	int iProjectionLoc = glGetUniformLocation(programID, "projectionMatrix");
-	glUniformMatrix4fv(iProjectionLoc, 1, GL_FALSE, glm::value_ptr(mProjection));
-
-	glm::mat4 mModelView = glm::lookAt(glm::vec3(0, 60, 30), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	glm::mat4 mCurrent = glm::rotate(mModelView, fRotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-	glUniformMatrix4fv(iModelViewLoc, 1, GL_FALSE, glm::value_ptr(mCurrent));
+	glm::mat4 model = glm::mat4();
+	model = glm::rotate(model, fRotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 	glBindVertexArray(uiVAOHeightmap);
 	glDrawElements(GL_TRIANGLE_STRIP, HM_SIZE_X*(HM_SIZE_Y - 1) * 2 + HM_SIZE_Y - 2, GL_UNSIGNED_INT, 0);
 
@@ -215,30 +231,11 @@ void releaseScene()
 	glDeleteProgram(programID);
 }
 
-float sof(float fVal) {
-	return fVal*fFrameInterval;
-}
-
-void updateTimer()
-{
-	clock_t tCur = clock();
-	fFrameInterval = float(tCur - tLastFrame) / float(CLOCKS_PER_SEC);
-	tLastFrame = tCur;
-}
-
 void frameBufferSizeChanged(GLFWwindow* window, int width, int height) {
-	mProjection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
-}
-
-void logFPS() {
-	clock_t tCurrent = clock();
-	if ((tCurrent - tLastSecond) >= CLOCKS_PER_SEC)
-	{
-		tLastSecond += CLOCKS_PER_SEC;
-		iFPSCount = iCurrentFPS;
-		iCurrentFPS = 0;
+	if (width != 0 && height != 0) {
+		glm::mat4 projection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
+		glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
 	}
-	iCurrentFPS++;
 }
 
 void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -255,3 +252,48 @@ void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 		glfwSwapInterval(bVerticalSync ? 1 : 0);
 	}
 }
+
+
+void updateDelta() {
+	delta = glfwGetTime() - lastLoopTime;
+	lastLoopTime = glfwGetTime();
+}
+
+void logFPS() {
+	if ((glfwGetTime() - lastSecond) >= 1)
+	{
+		lastSecond = glfwGetTime();
+		FPSCount = currentFPS;
+		currentFPS = 0;
+	}
+	currentFPS++;
+}
+
+float sof(float fVal) {
+	return fVal*delta;
+}
+
+
+/*
+void logFPS() {
+	clock_t tCurrent = clock();
+	if ((tCurrent - tLastSecond) >= CLOCKS_PER_SEC)
+	{
+		tLastSecond += CLOCKS_PER_SEC;
+		iFPSCount = iCurrentFPS;
+		iCurrentFPS = 0;
+	}
+	iCurrentFPS++;
+}
+
+void updateDelta()
+{
+	clock_t tCur = clock();
+	fFrameInterval = float(tCur - tLastFrame) / float(CLOCKS_PER_SEC);
+	tLastFrame = tCur;
+}
+
+float sof(float fVal) {
+	return fVal*fFrameInterval;
+}
+*/
