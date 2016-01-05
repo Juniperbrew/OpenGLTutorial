@@ -41,7 +41,6 @@ int FPSCount, currentFPS;
 double lastSecond;
 
 // Used for FPS calculation
-int iFPSCount, iCurrentFPS;
 clock_t tLastSecond;
 
 #define HM_SIZE_X 4 // Dimensions of our heightmap
@@ -114,7 +113,7 @@ int main(void)
 		logFPS();
 		updateDelta();
 		if (bShowFPS) {
-			char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", iFPSCount, bVerticalSync ? "On" : "Off");
+			char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, bVerticalSync ? "On" : "Off");
 			glfwSetWindowTitle(window, buf);
 		}
 		renderScene();
@@ -280,10 +279,10 @@ void logFPS() {
 	if ((tCurrent - tLastSecond) >= CLOCKS_PER_SEC)
 	{
 		tLastSecond += CLOCKS_PER_SEC;
-		iFPSCount = iCurrentFPS;
-		iCurrentFPS = 0;
+		FPSCount = CurrentFPS;
+		CurrentFPS = 0;
 	}
-	iCurrentFPS++;
+	CurrentFPS++;
 }
 
 void updateDelta()
@@ -295,5 +294,4 @@ void updateDelta()
 
 float sof(float fVal) {
 	return fVal*fFrameInterval;
-}
-*/
+}*/
