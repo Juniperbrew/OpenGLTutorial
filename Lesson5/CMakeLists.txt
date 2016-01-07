@@ -6,6 +6,8 @@ add_executable (${TARGET}
 main.cpp 	
 ../common/shader.cpp
 ../common/shader.hpp
+../common/window.cpp
+../common/window.h
 SimpleFragmentShader.fragmentshader
 SimpleVertexShader.vertexshader)
 

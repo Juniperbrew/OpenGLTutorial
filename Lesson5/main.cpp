@@ -2,43 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Include GLEW
 #include <GL/glew.h>
-
-// Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-using namespace glm;
+//using namespace glm;
 
-#include <iostream>
 #include <ctime>
+#include <iostream>
 
-#include <common/shader.hpp>
-
-void initScene();
-void renderScene();
-void releaseScene();
-float sof(float fVal);
-void updateDelta();
-void frameBufferSizeChanged(GLFWwindow* window, int width, int height);
-void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
-void logFPS();
-
-//Delta calculation
-double delta, lastLoopTime;
-
-// Used for FPS calculation
-int FPSCount, currentFPS;
-double lastSecond;
+#include "common/window.h"
 
 //Render time logging
 double lastRenderDuration;
-
 
 #define HM_SIZE_X 4 // Dimensions of our heightmap
 #define HM_SIZE_Y 4
@@ -47,11 +26,6 @@ GLuint uiVBOHeightmapData; // Here are stored heightmap data (vertices)
 GLuint uiVBOIndices; // And here indices for rendering heightmap
 
 GLuint uiVAOHeightmap; // One VAO for heightmap
-
-GLuint programID;
-
-bool bShowFPS = true;
-bool bVerticalSync;
 
 float fRotationAngle = 0.0f;
 const float PIover180 = 3.1415f / 180.0f;
@@ -62,72 +36,11 @@ GLint uniView;
 
 const char *title = "05.) Indexed Drawing - Tutorial by Michal Bubnar (www.mbsoftworks.sk)";
 
-
-int main(void)
-{
-	// Initialise GLFW
-	if (!glfwInit())
-	{
-		fprintf(stderr, "Failed to initialize GLFW\n");
-		getchar();
-		return -1;
-	}
-
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1024, 768, title, NULL, NULL);
-	if (window == NULL) {
-		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-	glfwSetFramebufferSizeCallback(window, frameBufferSizeChanged);
-	glfwSetKeyCallback(window, keyEvent);
-
-	glfwMakeContextCurrent(window);
-
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK) {
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-
-	// Ensure we can capture the escape key being pressed below
-	//glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-	initScene();
-
-	do {
-		logFPS();
-		updateDelta();
-		renderScene();
-		glfwPollEvents();
-
-	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		glfwWindowShouldClose(window) == 0);
-
-	releaseScene();
-
-	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
-
-	return 0;
+int main() {
+	openGLWindow.createAndShowWindow();
 }
 
 void initScene() {
-
-	glfwSwapInterval(1);
-	bVerticalSync = true;
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -178,22 +91,9 @@ void initScene() {
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(HM_SIZE_X*HM_SIZE_Y);
 
-	// Create and compile our GLSL program from the shaders
-	programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
-
-	// Use our shader
-	glUseProgram(programID);
-
 	//Get uniforms
 	uniModel = glGetUniformLocation(programID, "model");
-	uniProj = glGetUniformLocation(programID, "proj");
 	uniView = glGetUniformLocation(programID, "view");
-
-	//Setup projection and view
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
-	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
 
 	glm::mat4 view = glm::lookAt(glm::vec3(0, 60, 30), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
 	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
@@ -216,7 +116,6 @@ void renderScene() {
 
 	fRotationAngle += sof(1.0f);
 	
-	glfwSwapBuffers(window);
 	lastRenderDuration = glfwGetTime() - renderStart;
 }
 
@@ -228,53 +127,22 @@ void releaseScene()
 	glDeleteProgram(programID);
 }
 
-void frameBufferSizeChanged(GLFWwindow* window, int width, int height) {
-	if (width != 0 && height != 0) {
-		glm::mat4 projection = glm::perspective(45.0f, (float)width / height, 0.001f, 1000.0f);
-		glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
-	}
-}
-
 void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
-		bShowFPS = !bShowFPS;
-		if (!bShowFPS) {
+		openGLWindow.bShowFPS = !openGLWindow.bShowFPS;
+		if (!openGLWindow.bShowFPS) {
 			glfwSetWindowTitle(window, title);
 		}
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS)
 	{
-		bVerticalSync = !bVerticalSync;
-		glfwSwapInterval(bVerticalSync ? 1 : 0);
+		openGLWindow.bVerticalSync = !openGLWindow.bVerticalSync;
+		glfwSwapInterval(openGLWindow.bVerticalSync ? 1 : 0);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS)
 	{
 		std::cout << lastRenderDuration << "ms" << std::endl;
 	}
-}
-
-
-void updateDelta() {
-	delta = glfwGetTime() - lastLoopTime;
-	lastLoopTime = glfwGetTime();
-}
-
-void logFPS() {
-	if ((glfwGetTime() - lastSecond) >= 1)
-	{
-		lastSecond = glfwGetTime();
-		FPSCount = currentFPS;
-		currentFPS = 0;
-	}
-	currentFPS++;
-	if (bShowFPS) {
-		char buf[55]; sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, bVerticalSync ? "On" : "Off");
-		glfwSetWindowTitle(window, buf);
-	}
-}
-
-float sof(float fVal) {
-	return fVal*delta;
 }
