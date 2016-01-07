@@ -151,8 +151,7 @@ void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	}
 
 	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
-		openGLWindow.bVerticalSync = !openGLWindow.bVerticalSync;
-		glfwSwapInterval(openGLWindow.bVerticalSync ? 1 : 0);
+        openGLWindow.setVsync(!openGLWindow.getVsync());
 	}
 
 	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {

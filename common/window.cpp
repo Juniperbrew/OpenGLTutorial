@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -35,13 +37,13 @@ void logFPS() {
 		lastSecond = glfwGetTime();
 		FPSCount = currentFPS;
 		currentFPS = 0;
+        if (openGLWindow.bShowFPS) {
+            char buf[55];
+            sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, openGLWindow.getVsync() ? "On" : "Off");
+            glfwSetWindowTitle(window, buf);
+        }
 	}
 	currentFPS++;
-	if (openGLWindow.bShowFPS) {
-		char buf[55];
-		sprintf(buf, "FPS: %d, V-Sync: %s", FPSCount, openGLWindow.bVerticalSync ? "On" : "Off");
-		glfwSetWindowTitle(window, buf);
-	}
 }
 
 int OpenGLWindow::createAndShowWindow()
@@ -77,6 +79,8 @@ int OpenGLWindow::createAndShowWindow()
 
 	glfwMakeContextCurrent(window);
 
+    setVsync(true);
+    
 	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK) {
@@ -102,8 +106,6 @@ int OpenGLWindow::createAndShowWindow()
 	GLuint uniProj = glGetUniformLocation(programID, "proj");
 	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
 
-	glfwSwapInterval(1);
-	bVerticalSync = true;
 	initScene();
 
 	do {
@@ -113,7 +115,10 @@ int OpenGLWindow::createAndShowWindow()
 		renderScene();
 		glfwPollEvents();
 		glfwSwapBuffers(window);
-
+        if(openGLWindow.getVsync()){
+            long sleep = ((1.0f/60)-delta)*1000000;
+            std::this_thread::sleep_for(std::chrono::nanoseconds(sleep));
+        }
 	} // Check if the ESC key was pressed or the window was closed
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
 		glfwWindowShouldClose(window) == 0);
@@ -148,6 +153,14 @@ int OpenGLWindow::getKey(int key){
     return glfwGetKey(window, key);
 }
 
+void OpenGLWindow::setVsync(bool enable){
+    glfwSwapInterval(enable ? 1 : 0);
+    vsync = enable;
+}
+
+bool OpenGLWindow::getVsync(){
+    return vsync;
+}
 double OpenGLWindow::getDelta(){
     return delta;
 }

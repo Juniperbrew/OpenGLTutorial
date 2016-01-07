@@ -10,10 +10,11 @@ public :
     void disableCursor(bool mode);
     int getKey(int key);
     double getDelta();
-	bool bVerticalSync;
+    void setVsync(bool enable);
+    bool getVsync();
 	bool bShowFPS;
 private :
-	int test;
+    bool vsync;
 };
 
 void initScene(), renderScene(), releaseScene(), doLogic();
