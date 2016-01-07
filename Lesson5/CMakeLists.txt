@@ -8,6 +8,8 @@ main.cpp
 ../common/shader.hpp
 ../common/window.cpp
 ../common/window.h
+../common/camera.cpp
+../common/camera.h
 SimpleFragmentShader.fragmentshader
 SimpleVertexShader.vertexshader)
 
@@ -19,8 +21,9 @@ install (TARGETS ${TARGET} RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin)
 
 target_link_libraries(${TARGET} ${ALL_LIBS})
 
-# Xcode and Visual working directories, not sure if this does anything?
+# Xcode 
 set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
+# VS working directory
 create_target_launcher(${TARGET} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/")
 
 #Possible to get this in main makefile?

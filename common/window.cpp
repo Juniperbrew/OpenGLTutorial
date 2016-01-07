@@ -72,6 +72,8 @@ int OpenGLWindow::createAndShowWindow()
 	}
 	glfwSetFramebufferSizeCallback(window, frameBufferSizeChanged);
 	glfwSetKeyCallback(window, keyEvent);
+	glfwSetCursorPosCallback(window, mouseMoved);
+    glfwSetMouseButtonCallback(window, mouseClicked);
 
 	glfwMakeContextCurrent(window);
 
@@ -107,6 +109,7 @@ int OpenGLWindow::createAndShowWindow()
 	do {
 		logFPS();
 		updateDelta();
+        doLogic();
 		renderScene();
 		glfwPollEvents();
 		glfwSwapBuffers(window);
@@ -131,4 +134,20 @@ void frameBufferSizeChanged(GLFWwindow* window, int width, int height) {
 		GLuint uniProj = glGetUniformLocation(programID, "proj");
 		glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(projection));
 	}
+}
+
+void OpenGLWindow::disableCursor(bool mode){
+    if(mode){
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }else{
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+}
+
+int OpenGLWindow::getKey(int key){
+    return glfwGetKey(window, key);
+}
+
+double OpenGLWindow::getDelta(){
+    return delta;
 }

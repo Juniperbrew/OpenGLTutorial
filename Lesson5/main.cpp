@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "common/window.h"
+#include "common/camera.h"
 
 //Render time logging
 double lastRenderDuration;
@@ -33,6 +34,10 @@ const float PIover180 = 3.1415f / 180.0f;
 GLint uniModel;
 GLint uniProj;
 GLint uniView;
+
+bool mouseLook;
+
+Camera camera(glm::vec3(0, 60, 30), glm::vec3(0, 0, 0));
 
 const char *title = "05.) Indexed Drawing - Tutorial by Michal Bubnar (www.mbsoftworks.sk)";
 
@@ -107,6 +112,9 @@ void renderScene() {
 	double renderStart = glfwGetTime();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindVertexArray(uiVAOHeightmap);
+    
+    //Update camera
+	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(camera.getView()));
 
 	glm::mat4 model = glm::mat4();
 	model = glm::rotate(model, fRotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -117,6 +125,13 @@ void renderScene() {
 	fRotationAngle += sof(1.0f);
 	
 	lastRenderDuration = glfwGetTime() - renderStart;
+}
+
+void doLogic(){
+    if (openGLWindow.getKey(GLFW_KEY_W) != GLFW_RELEASE) camera.moveForward(1.0f*openGLWindow.getDelta());
+    if (openGLWindow.getKey(GLFW_KEY_S) != GLFW_RELEASE) camera.moveBackward(1.0f*openGLWindow.getDelta());
+    if (openGLWindow.getKey(GLFW_KEY_A) != GLFW_RELEASE) camera.moveLeft(1.0f*openGLWindow.getDelta());
+    if (openGLWindow.getKey(GLFW_KEY_D) != GLFW_RELEASE) camera.moveRight(1.0f*openGLWindow.getDelta());
 }
 
 void releaseScene()
@@ -135,14 +150,30 @@ void keyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
 		openGLWindow.bVerticalSync = !openGLWindow.bVerticalSync;
 		glfwSwapInterval(openGLWindow.bVerticalSync ? 1 : 0);
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
 		std::cout << lastRenderDuration << "ms" << std::endl;
 	}
+}
+
+void mouseMoved(GLFWwindow* window, double xpos, double ypos){
+    if(mouseLook){
+         camera.updateMouselook(xpos,ypos);
+    }
+}
+
+void mouseClicked(GLFWwindow* window, int button, int action, int mods){
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+        mouseLook = !mouseLook;
+        openGLWindow.disableCursor(mouseLook);
+        if(mouseLook){
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            camera.startMouselook(xpos, ypos);
+        }
+    }
 }
